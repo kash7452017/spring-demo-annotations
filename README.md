@@ -105,3 +105,69 @@ public class TennisCoach implements Coach  {
 	}
 }
 ```
+## 純JAVA Code，沒有XML配置
+>引用https://blog.csdn.net/u010013573/article/details/86650493
+>
+>使用`@Configuration`來註解類，在類裡面包含多個@Bean註解的方法。這些使用@Bean註解的方法，會被加載為`BeanFactory`裡面的`BeanDefinition`，其中beanName默認為方法名，並且默認會創建對應的bean對象實例，其中bean默認單例的。其實@Configuration註解的類，就相當於一個xml配置文。
+>
+>`@ComponentScan`：指定需要掃描的包。基於Spring的componentScan，因為@Configuration註解自身也是一個@Component。可以是使用xml或者使用@ComponentScan註解，@ComponentScan註解默認是掃描當前類所在的包及其子包
+>
+>@PropertySource：為Environment提供propertySource，即指定的屬性源的屬性鍵值也會加載到Environment中，其中Environment主要用來存放類路徑下的相關屬性文件，如properties文件的內容，是spring容器啟動時，最先加載的，即在加載bean之前加載，在創建beanDefinition或bean實例對象時就可以直接使用了
+>
+>
+>* 配置類不能是final 類（沒法動態代理）
+>* 配置類必須是非本地的（即不能將配置類定義在其他類的方法內部，不能是private）
+>* 配置類必須有一個無參構造函數
+```
+@Configuration
+//@ComponentScan("com.luv2code.springdemo")
+@PropertySource("classpath:sport.properties")
+public class SportConfig {
+
+	// define bean for our sad fortune service
+	@Bean
+	public FortuneService sadFortuneService()
+	{
+		return new SadFortuneService();
+	}
+	
+	// define bean for our swim coach AND inject dependency
+	@Bean
+	public Coach swimCoach()
+	{
+		return new SwimCoach(sadFortuneService());
+	}
+}
+```
+**sport.properties文件**
+```
+foo.email=myeasycoach@luv2code.com
+foo.team=Awesome Java Coders
+```
+**新增`email`與`team`屬性，以及Getter方法並加入屬性之值的註釋，給出`${foo.email}`與`${foo.team}`屬性名稱**
+```
+@Component
+public class SwimCoach implements Coach {
+	
+	private FortuneService fortuneService;
+	
+	@Value("${foo.email}")
+	private String email;
+	
+	@Value("${foo.team}")
+	private String team;
+	
+	public SwimCoach(FortuneService theFortuneService)
+	{
+		fortuneService = theFortuneService;
+	}
+	
+	public String getEmail() {
+		return email;
+	}
+
+	public String getTeam() {
+		return team;
+	}
+}
+```
